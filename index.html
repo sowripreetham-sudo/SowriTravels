@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CityCompass | Smart Tourist Guide, Itinerary Optimizer & Fair-Fare Shield</title>
+  <meta name="description"
+    content="Intelligent travel companion for exploring new cities. Discover authentic temples, royal architecture, legendary street food, nearest budget lodges, and protect yourself against auto/cab overcharging with real-time fair fare estimates." />
+  <meta name="keywords"
+    content="travel app, city guide, temples, architecture, street food, fair fare calculator, scam shield, auto rickshaw rates, tourist itinerary optimizer" />
+
+  <!-- Open Graph Meta -->
+  <meta property="og:title" content="CityCompass - Smart Travel & Fair Fare Shield" />
+  <meta property="og:description"
+    content="Discover authentic spots and calculate real distances & fair cab fares in any new city." />
+  <meta property="og:image" content="assets/images/hero.jpg" />
+
+  <!-- Favicon -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet CSS for Interactive OpenStreetMap -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-brand" id="brand-logo" title="CityCompass - Smart Travel Guide">
+        <div class="logo-icon">🧭</div>
+        <div class="logo-text">
+          <h1>Sowri Travels</h1>
+          <span class="logo-badge">Smart Explorer &amp; Fair Fare</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- City Selector -->
+        <div class="city-select-box">
+          <span title="Select City">📍</span>
+          <select id="city-selector" aria-label="Select City">
+            <option value="jaipur" selected>Jaipur (Pink City)</option>
+            <option value="varanasi">Varanasi (Kashi)</option>
+            <option value="hyderabad">Hyderabad (City of Pearls)</option>
+            <option value="mysuru">Mysuru (Palace City)</option>
+          </select>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button class="icon-btn" id="theme-toggle-btn" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+          <span id="theme-icon">🌙</span>
+        </button>
+
+        <!-- Itinerary Quick Button -->
+        <button class="itinerary-btn" id="nav-itinerary-btn" title="View Selected Route">
+          <span>🗺️ My Route</span>
+          <span class="itinerary-badge" id="itinerary-count-badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section" id="hero-banner" style="background-image: url('assets/images/hero.jpg');">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-tag">
+        <span>✨ Anti-Overcharge &amp; Smart Tour Guide</span>
+      </div>
+      <h1 class="hero-title" id="hero-title">
+        Explore <span id="hero-city-name">Jaipur</span> Like an Insider
+      </h1>
+      <p class="hero-subtitle" id="hero-city-tagline">
+        Find sacred temples, breathtaking architecture, iconic street foods, and honest cab fares from your arrival
+        station.
+      </p>
+
+      <!-- Arrival Hub Selector Bar -->
+      <div class="arrival-hub-bar glass-panel">
+        <div class="hub-label">
+          <span>🚉</span>
+          <div>
+            <strong>Current / Arrival Point:</strong>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Distances calculate from here</div>
+          </div>
+        </div>
+
+        <div class="hub-options" id="arrival-hub-chips">
+          <!-- Dynamically populated arrival chips -->
+        </div>
+
+        <button class="current-gps-btn" id="use-gps-btn" title="Detect your real location via GPS">
+          <span>🎯</span> Use My GPS
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Navigation Tabs -->
+  <div class="app-tabs-container">
+    <nav class="tabs-wrapper glass-panel" aria-label="App Navigation">
+      <button class="tab-btn active" data-tab="tab-explore">
+        <span>🔍</span> Discover &amp; Curate
+      </button>
+      <button class="tab-btn" data-tab="tab-fair-fare">
+        <span>🛡️</span> Fair-Fare Shield
+      </button>
+      <button class="tab-btn" data-tab="tab-itinerary">
+        <span>🧭</span> Places to Visit First <span class="itinerary-badge" id="tab-itinerary-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-map">
+        <span>🗺️</span> Interactive Route Map
+      </button>
+    </nav>
+  </div>
+
+  <!-- Main Application Body -->
+  <main class="main-content">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: DISCOVERY & CURATED PLACES          -->
+    <!-- ========================================== -->
+    <section class="tab-view active" id="tab-explore">
+      <!-- Toolbar Filters -->
+      <div class="filter-toolbar">
+        <div class="category-pills" id="category-filters">
+          <button class="category-pill active" data-category="all">
+            <span>✨</span> All Top Spots
+          </button>
+          <button class="category-pill" data-category="temple">
+            <span>🛕</span> Sacred Temples
+          </button>
+          <button class="category-pill" data-category="architecture">
+            <span>🏛️</span> Royal Architecture
+          </button>
+          <button class="category-pill" data-category="food">
+            <span>🍲</span> Authentic Food
+          </button>
+          <button class="category-pill" data-category="lodge">
+            <span>🏨</span> Station Lodges &amp; Stays
+          </button>
+        </div>
+
+        <div class="search-sort-box">
+          <div class="search-input-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Search places, foods, temples..."
+              aria-label="Search places" />
+          </div>
+
+          <select class="sort-select" id="sort-selector" aria-label="Sort places">
+            <option value="priority">Recommended First</option>
+            <option value="nearest">Nearest to Station</option>
+            <option value="rating">Highest Rated</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Places Cards Grid -->
+      <div class="places-grid" id="places-grid">
+        <!-- Rendered via JavaScript -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: FAIR-FARE SHIELD (Scam Prevention)  -->
+    <!-- ========================================== -->
+    <section class="tab-view" id="tab-fair-fare">
+      <div class="fare-shield-container">
+        <!-- Left: Form Input -->
+        <div class="fare-calculator-card">
+          <div class="fare-calc-header">
+            <h2><span>🛡️</span> Fair-Fare Shield</h2>
+            <p>Know the honest government metered fare before taking an auto or cab. Avoid getting overcharged for short
+              trips to lodges or attractions!</p>
+          </div>
+
+          <form id="fare-form">
+            <div class="form-group">
+              <label for="fare-pickup-select">Pickup Location</label>
+              <select id="fare-pickup-select" class="form-control">
+                <!-- Dynamically filled with arrival hubs & user location -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fare-drop-select">Destination (Lodge or Attraction)</label>
+              <select id="fare-drop-select" class="form-control">
+                <!-- Dynamically filled with places -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-toggle">
+                <input type="checkbox" id="fare-night-toggle" />
+                <span>🌙 Night Surcharge (10:00 PM - 5:00 AM, +15%)</span>
+              </label>
+            </div>
+
+            <button type="button" class="btn-primary" id="calc-fare-btn"
+              style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+              <span>⚡</span> Check Real Distance &amp; Fair Rates
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Results & Scam Radar -->
+        <div class="fare-results-card" id="fare-results-panel">
+          <div class="route-meta-banner">
+            <div class="route-meta-stat">
+              <div class="stat-value" id="calc-dist-val">-- km</div>
+              <div class="stat-label">Road Distance</div>
+            </div>
+            <div class="route-meta-stat">
+              <div class="stat-value" id="calc-time-val">-- mins</div>
+              <div class="stat-label">Drive Time</div>
+            </div>
+            <div class="route-meta-stat">
+              <div class="stat-value" id="calc-walk-val">-- mins</div>
+              <div class="stat-label">Walk Time</div>
+            </div>
+          </div>
+
+          <!-- Transport Fares Comparison -->
+          <div class="transport-fares-grid">
+            <div class="fare-tile recommended">
+              <div class="fare-tile-icon">🛺</div>
+              <div class="fare-tile-title">Metered Auto</div>
+              <div class="fare-tile-price" id="calc-auto-fare">₹--</div>
+              <div class="fare-tile-sub">Govt. standard rate</div>
+            </div>
+
+            <div class="fare-tile">
+              <div class="fare-tile-icon">🚕</div>
+              <div class="fare-tile-title">Cab / Taxi</div>
+              <div class="fare-tile-price" id="calc-cab-fare">₹--</div>
+              <div class="fare-tile-sub">Uber / Ola estimate</div>
+            </div>
+
+            <div class="fare-tile">
+              <div class="fare-tile-icon">🛵</div>
+              <div class="fare-tile-title">Bike Taxi</div>
+              <div class="fare-tile-price" id="calc-bike-fare">₹--</div>
+              <div class="fare-tile-sub">Single traveler budget</div>
+            </div>
+          </div>
+
+          <!-- Anti-Gouging Radar Banner -->
+          <div class="scam-radar-banner">
+            <div class="scam-radar-head">
+              <span>⚠️</span>
+              <strong>Station Gate Scam Warning:</strong>
+            </div>
+            <p class="scam-radar-text" id="calc-scam-text">
+              Select your pickup and destination to calculate the realistic fare and view local bargaining advice.
+            </p>
+            <div class="advice-pills">
+              <div class="advice-pill">💡 Look for Official Prepaid Counter</div>
+              <div class="advice-pill">🚶 Walk 100m past station gate for standard rates</div>
+              <div class="advice-pill">📱 Check Uber/Rapido as a bargaining reference</div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem;">
+            <button class="btn-primary" id="open-route-map-btn" style="flex: 1;">
+              <span>🗺️</span> View Driving Route on Map
+            </button>
+            <button class="btn-secondary" id="add-to-route-from-fare-btn">
+              <span>➕</span> Add to Day Itinerary
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: SMART ITINERARY ("Places to Visit First") -->
+    <!-- ========================================== -->
+    <section class="tab-view" id="tab-itinerary">
+      <div class="itinerary-container">
+        <!-- Main Route Steps Card -->
+        <div class="itinerary-main-card">
+          <div class="itinerary-header">
+            <div>
+              <h2><span>🧭</span> Optimized Day Itinerary</h2>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Our intelligent algorithm sequences your chosen stops from your arrival point to minimize travel expense
+                and avoid criss-crossing the city.
+              </p>
+            </div>
+            <button class="btn-primary" id="reorder-route-btn">
+              <span>⚡</span> Re-Optimize Shortest Route
+            </button>
+          </div>
+
+          <!-- List of Steps -->
+          <div class="itinerary-steps-list" id="itinerary-steps-container">
+            <!-- Dynamically populated or empty placeholder -->
+          </div>
+        </div>
+
+        <!-- Sidebar Summary -->
+        <div class="itinerary-sidebar">
+          <h3 style="margin-bottom: 1rem; font-size: 1.2rem;">📊 Trip Summary</h3>
+
+          <div class="summary-metric-card">
+            <div class="metric-row">
+              <span>Starting Point:</span>
+              <strong id="itin-start-name">Jaipur Junction</strong>
+            </div>
+            <div class="metric-row">
+              <span>Total Stops:</span>
+              <strong id="itin-stops-count">0</strong>
+            </div>
+            <div class="metric-row">
+              <span>Total Circuit Distance:</span>
+              <strong id="itin-total-dist">0 km</strong>
+            </div>
+            <div class="metric-row">
+              <span>Estimated Road Travel Time:</span>
+              <strong id="itin-travel-time">0 mins</strong>
+            </div>
+            <div class="metric-row">
+              <span>Fair Auto Transit Budget:</span>
+              <strong id="itin-est-budget" style="color: var(--accent-green);">₹0</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <button class="btn-primary" id="view-itinerary-map-btn" style="width: 100%;">
+              <span>🗺️</span> View Full Path on Map
+            </button>
+            <button class="btn-secondary" id="clear-itinerary-btn" style="width: 100%;">
+              <span>🗑️</span> Clear All Stops
+            </button>
+            <button class="btn-secondary" id="print-itinerary-btn" style="width: 100%;">
+              <span>🖨️</span> Print / Save Itinerary
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: INTERACTIVE LEAFLET MAP             -->
+    <!-- ========================================== -->
+    <section class="tab-view" id="tab-map">
+      <div class="map-view-container">
+        <div id="leaflet-map"></div>
+
+        <!-- Floating Map Legend -->
+        <div class="map-floating-panel">
+          <strong style="display: block; margin-bottom: 0.6rem; font-size: 0.85rem;">🗺️ Map Legend &amp;
+            Waypoints</strong>
+          <div class="map-legend">
+            <div class="legend-item">
+              <div class="legend-dot start"></div>
+              <span>Arrival Hub / Station (Start)</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot temple"></div>
+              <span>Sacred Temples</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot architecture"></div>
+              <span>Royal Architecture &amp; Forts</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot food"></div>
+              <span>Famous Street Food Spots</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot lodge"></div>
+              <span>Station Lodges &amp; Stays</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: PLACE DETAILS & TRAVELER REVIEWS    -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="place-detail-modal">
+    <div class="modal-content">
+      <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div id="modal-content-inner">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Application Logic -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
